@@ -1,3 +1,12 @@
+const {
+  keys,
+  getOwnPropertyNames,
+  prototype: {
+    hasOwnProperty,
+  },
+} = Object;
+
+
 function getGlobal() {
   if (typeof global !== 'undefined') {
     return global;
@@ -28,33 +37,33 @@ function isFunction(obj) {
 
 
 function getOwnEnumKeys(obj) {
-  const keys = [];
+  const list = [];
   for (const key in obj) {
-    if (Object.hasOwnProperty.call(obj, key)) {
-      keys.push(key);
+    if (hasOwnProperty.call(obj, key)) {
+      list.push(key);
     }
   }
-  return keys;
+  return list;
 }
 
 
 function forOwnProps(obj, fn) {
-  return Object.getOwnPropertyNames(obj).forEach((key) => fn(obj[key], key, obj));
+  return getOwnPropertyNames(obj).forEach((key) => fn(obj[key], key, obj));
 }
 
 
 function forEnumProps(obj, fn) {
-  return Object.keys(obj).forEach((key) => fn(obj[key], key, obj));
+  return keys(obj).forEach((key) => fn(obj[key], key, obj));
 }
 
 
 function mapOwnPropsToArray(obj, fn) {
-  return Object.getOwnPropertyNames(obj).forEach((key) => fn(obj[key], key, obj));
+  return getOwnPropertyNames(obj).forEach((key) => fn(obj[key], key, obj));
 }
 
 
 function mapEnumPropsToArray(obj, fn) {
-  return Object.keys(obj).map((key) => fn(obj[key], key, obj));
+  return keys(obj).map((key) => fn(obj[key], key, obj));
 }
 
 
