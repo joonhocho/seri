@@ -42,4 +42,39 @@ describe('seri', () => {
     expect(clone).to.be.an.instanceof(Date);
     expect(clone.toJSON()).to.equal(date.toJSON());
   });
+
+
+  it('stringify/parse custom class', () => {
+    class A {
+      static toJSON = (a) => `${a.a},${a.b}`
+      static fromJSON = (json) => new A(...json.split(','))
+
+      constructor(a, b) {
+        this.a = a;
+        this.b = b;
+      }
+
+      equals(o) {
+        return o instanceof A && this.a === o.a && this.b === o.b;
+      }
+    }
+
+    seri.addClass(A);
+
+    const obj = new A('hello', 'world');
+    const clone = seri.parse(seri.stringify(obj));
+    expect(clone).to.not.equal(obj);
+    expect(clone).to.be.an.instanceof(A);
+    expect(obj.equals(clone)).to.be.true;
+
+    seri.removeClass(A);
+
+
+    global.A = A;
+    const obj2 = new A('hello', 'world');
+    const clone2 = seri.parse(seri.stringify(obj2));
+    expect(clone2).to.not.equal(obj2);
+    expect(clone2).to.be.an.instanceof(A);
+    expect(obj2.equals(clone2)).to.be.true;
+  });
 });

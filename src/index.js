@@ -4,6 +4,8 @@ import {
   ParseError,
 } from './errors';
 import {
+  isFunction,
+  isValidClassName,
   getGlobal,
   getOwnEnumKeys,
   forOwnProps,
@@ -11,6 +13,9 @@ import {
   mapOwnPropsToArray,
   mapEnumPropsToArray,
 } from './util';
+
+
+const CLASS_NAME_KEY = '<5Er1]';
 
 
 const create = (options = {}) => {
@@ -25,25 +30,48 @@ const create = (options = {}) => {
 
   const jsonStringify =
       options.stringify || JSON.stringify || glob.JSON.stringify;
-  if (typeof jsonStringify !== 'function') {
+  if (!isFunction(jsonStringify)) {
     throw new ConfigError("'stringify' must be provided");
   }
 
   const jsonParse =
       options.parse || JSON.parse || glob.JSON.parse;
-  if (typeof jsonParse !== 'function') {
+  if (!isFunction(jsonParse)) {
     throw new ConfigError("'parse' must be provided");
   }
 
   const getPrototypeOf =
       options.getPrototypeOf || Object.getPrototypeOf ||
       glob.Reflect && glob.Reflect.getPrototypeOf;
-  if (typeof getPrototypeOf !== 'function') {
+  if (!isFunction(getPrototypeOf)) {
     throw new ConfigError("'getPrototypeOf' must be provided");
   }
 
-  const getCustomStringify = ({name, stringify}) =>
-    stringify || context[name] && context[name].stringify;
+
+  const getToJSON = ({name, toJSON}) =>
+    toJSON ||
+    context[name] && context[name].toJSON ||
+    glob[name] && glob[name].toJSON;
+
+
+  const getFromJSON = ({fromJSON}, name) =>
+    fromJSON ||
+    context[name] && context[name].fromJSON ||
+    glob[name] && glob[name].fromJSON;
+
+
+  const addClass = (Class) => {
+    const {name} = Class;
+    if (!isValidClassName(name)) {
+      throw new StringifyError("'name' must be provided to serialize custom class.");
+    }
+    context[name] = Class;
+  };
+
+
+  const removeClass = (name) => {
+    delete context[name];
+  };
 
 
   const stringify = (data) => {
@@ -71,7 +99,7 @@ const create = (options = {}) => {
 
       // Custom class objects
       const {name} = constructor;
-      if (!(name && typeof name === 'string')) {
+      if (!isValidClassName(name)) {
         throw new StringifyError("'name' must be provided to serialize custom class.");
       }
 
@@ -79,13 +107,13 @@ const create = (options = {}) => {
       if (data.toJSON) {
         json = data.toJSON();
       } else {
-        const customStringify = getCustomStringify(constructor);
-        if (typeof customStringify !== 'function') {
-          throw new StringifyError("'class.prototype.toJSON' or 'stringify' must be provided to serialize custom class.");
+        const toJSON = getToJSON(constructor);
+        if (!toJSON) {
+          throw new StringifyError("'class.prototype.toJSON' or 'class.toJSON' must be provided to serialize custom class.");
         }
-        json = customStringify(data);
+        json = toJSON(data);
       }
-      return jsonStringify({__SERI_CLASS__: name, json});
+      return jsonStringify({[CLASS_NAME_KEY]: name, p: json});
     default:
       throw new StringifyError(`Unknown type. ${typeof data}`);
     }
@@ -134,14 +162,29 @@ const create = (options = {}) => {
     case 'object':
       const {constructor} = data;
       if (!constructor || constructor === Object) {
-        const {__SERI_CLASS__, json} = data;
-        if (!__SERI_CLASS__) {
-          forOwnProps(data, (val, key) => {
-            data[key] = instantiate(val);
-          });
+        const {[CLASS_NAME_KEY]: className, p: json} = data;
+        if (!className) {
+          forOwnProps(data, (val, key) => { data[key] = instantiate(val); });
           return data;
         }
-        return new (context[__SERI_CLASS__] || glob[__SERI_CLASS__])(json);
+
+        const Class = context[className] || glob[className];
+        if (!Class) {
+          throw new ParseError(`Could not find '${className}' class.`);
+        }
+
+        const fromJSON = getFromJSON(Class, className);
+        if (fromJSON) {
+          return fromJSON(json);
+        }
+
+        if (!isFunction(Class)) {
+          throw new ParseError(`'toJSON' must be provided for '${className}' class.`);
+        }
+
+        let args = json;
+        try { args = parse(json); } catch (e) {}
+        return new Class(args);
       }
 
       if (Array.isArray(data)) {
@@ -151,17 +194,17 @@ const create = (options = {}) => {
       // Custom class objects
       return data;
     default:
-      throw new StringifyError(`Unknown type. ${typeof data}`);
+      throw new ParseError(`Unknown type. ${typeof data}`);
     }
   };
 
-
   const parse = (json) => instantiate(jsonParse(json));
-
 
   return {
     stringify,
     parse,
+    addClass,
+    removeClass,
   };
 };
 
@@ -171,7 +214,6 @@ try { defaultSeri = create(); } catch (e) {}
 
 
 export {
+  defaultSeri as default,
   create,
 };
-
-export default defaultSeri;

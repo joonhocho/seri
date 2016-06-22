@@ -12,6 +12,21 @@ function getGlobal() {
 }
 
 
+function startsWith(str, prefix) {
+  return str.lastIndexOf(prefix, 0) === 0;
+}
+
+
+function isValidClassName(str) {
+  return str !== '' && typeof str === 'string';
+}
+
+
+function isFunction(obj) {
+  return typeof obj === 'function';
+}
+
+
 function getOwnEnumKeys(obj) {
   const keys = [];
   for (const key in obj) {
@@ -20,7 +35,7 @@ function getOwnEnumKeys(obj) {
     }
   }
   return keys;
-};
+}
 
 
 function forOwnProps(obj, fn) {
@@ -44,6 +59,9 @@ function mapEnumPropsToArray(obj, fn) {
 
 
 export {
+  isFunction,
+  isValidClassName,
+  startsWith,
   getGlobal,
   getOwnEnumKeys,
   forOwnProps,
@@ -53,6 +71,9 @@ export {
 };
 
 export default {
+  isFunction,
+  isValidClassName,
+  startsWith,
   getGlobal,
   getOwnEnumKeys,
   forOwnProps,
