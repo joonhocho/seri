@@ -125,6 +125,54 @@ describe('seri', () => {
       expect(xy.equals(xyNestedClone)).to.be.true;
       seri.removeClass(XY);
     });
+
+    it('README Nested Class', () => {
+      class Item {
+        static fromJSON = (name) => new Item(name)
+
+        constructor(name) {
+          this.name = name;
+        }
+
+        toJSON() {
+          return this.name;
+        }
+      }
+
+      class Bag {
+        static fromJSON = (itemsJson) => new Bag(seri.parse(itemsJson))
+
+        constructor(items) {
+          this.items = items;
+        }
+
+        toJSON() {
+          return seri.stringify(this.items);
+        }
+      }
+
+      seri.addClass(Item);
+      seri.addClass(Bag);
+
+      const bag = new Bag([
+        new Item('apple'),
+        new Item('orange'),
+        new Item('3'),
+        new Item('[]'),
+      ]);
+
+      const bagClone = seri.parse(seri.stringify(bag));
+
+      expect(bagClone).to.be.an.instanceof(Bag);
+      expect(bagClone.items).to.be.an.instanceof(Array);
+      bagClone.items.forEach((item, i) => {
+        expect(item).to.be.an.instanceof(Item);
+        expect(item.name).to.equal(bag.items[i].name);
+      });
+
+      seri.removeClass(Item);
+      seri.removeClass(Bag);
+    });
   });
 
 

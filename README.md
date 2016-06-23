@@ -118,9 +118,79 @@ const xyNestedClone = seri.parse(seri.stringify({xy})).xy;
 xy.equals(xyClone);
 ```
 
+#### Nested Custom Classes
+```javascript
+class Item {
+  static fromJSON = (name) => new Item(name)
 
-### TODO
- - Explain how it works
+  constructor(name) {
+    this.name = name;
+  }
+
+  toJSON() {
+    return this.name;
+  }
+}
+
+class Bag {
+  static fromJSON = (itemsJson) => new Bag(seri.parse(itemsJson))
+
+  constructor(items) {
+    this.items = items;
+  }
+
+  toJSON() {
+    return seri.stringify(this.items);
+  }
+}
+
+// register classes
+seri.addClass(Item);
+seri.addClass(Bag);
+
+
+const bag = new Bag([
+  new Item('apple'),
+  new Item('orange'),
+]);
+
+
+const bagClone = seri.parse(seri.stringify(bag));
+
+
+// validate
+bagClone instanceof Bag;
+
+bagClone.items[0] instanceof Item;
+bagClone.items[0].name === 'apple';
+
+bagClone.items[1] instanceof Item;
+bagClone.items[1].name === 'orange';
+```
+
+
+### How it works
+It uses `class.prototype.toJSON` or `class.toJSON` to get JSON string for an object and compose it with its class name.
+
+Here's how it's structured:
+```javascript
+JSON.stringify({
+  // `<5Er1]` is a magic key for class name.
+  // `<Seri>`
+  '<5Er1]': ${className},
+
+  // `p` is for a payload.
+  // `obj.toJSON()` or `class.toJSON(obj)`.
+  'p': ${json}
+});
+```
+
+Here's an example with `Date`:
+```javascript
+seri.stringify(new Date());
+
+// '{"<5Er1]":"Date","p":"2016-06-23T22:01:47.974Z"}'
+```
 
 
 ### LICENSE

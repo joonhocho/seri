@@ -122,7 +122,14 @@ const create = (options = {}) => {
         }
         json = toJSON(data);
       }
-      return jsonStringify({[CLASS_NAME_KEY]: name, p: json});
+      if (typeof json !== 'string') {
+        throw new StringifyError("'toJSON' must return string.");
+      }
+
+      return jsonStringify({
+        [CLASS_NAME_KEY]: name,
+        p: json,
+      });
     default:
       throw new StringifyError(`Unknown type. ${typeof data}`);
     }
@@ -191,9 +198,7 @@ const create = (options = {}) => {
           throw new ParseError(`'toJSON' must be provided for '${className}' class.`);
         }
 
-        let args = json;
-        try { args = parse(json); } catch (e) {}
-        return new Class(args);
+        return new Class(json);
       }
 
       if (Array.isArray(data)) {
