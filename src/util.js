@@ -36,7 +36,7 @@ function isFunction(obj) {
 }
 
 
-function getOwnEnumKeys(obj) {
+function getOwnKeys(obj) {
   const list = [];
   for (const key in obj) {
     if (hasOwnProperty.call(obj, key)) {
@@ -47,22 +47,22 @@ function getOwnEnumKeys(obj) {
 }
 
 
-function forOwnProps(obj, fn) {
+function forOwnPropNames(obj, fn) {
   return getOwnPropertyNames(obj).forEach((key) => fn(obj[key], key, obj));
 }
 
 
-function forEnumProps(obj, fn) {
+function forKeys(obj, fn) {
   return keys(obj).forEach((key) => fn(obj[key], key, obj));
 }
 
 
-function mapOwnPropsToArray(obj, fn) {
+function mapOwnPropNamesToArray(obj, fn) {
   return getOwnPropertyNames(obj).forEach((key) => fn(obj[key], key, obj));
 }
 
 
-function mapEnumPropsToArray(obj, fn) {
+function mapKeysToArray(obj, fn) {
   return keys(obj).map((key) => fn(obj[key], key, obj));
 }
 
@@ -72,11 +72,11 @@ export {
   isValidClassName,
   startsWith,
   getGlobal,
-  getOwnEnumKeys,
-  forOwnProps,
-  forEnumProps,
-  mapOwnPropsToArray,
-  mapEnumPropsToArray,
+  getOwnKeys,
+  forOwnPropNames,
+  forKeys,
+  mapOwnPropNamesToArray,
+  mapKeysToArray,
 };
 
 export default {
@@ -84,9 +84,9 @@ export default {
   isValidClassName,
   startsWith,
   getGlobal,
-  getOwnEnumKeys,
-  forOwnProps,
-  forEnumProps,
-  mapOwnPropsToArray,
-  mapEnumPropsToArray,
+  getOwnKeys,
+  forOwnPropNames,
+  forKeys,
+  mapOwnPropNamesToArray,
+  mapKeysToArray,
 };

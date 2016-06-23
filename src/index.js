@@ -7,11 +7,11 @@ import {
   isFunction,
   isValidClassName,
   getGlobal,
-  getOwnEnumKeys,
-  forOwnProps,
-  forEnumProps,
-  mapOwnPropsToArray,
-  mapEnumPropsToArray,
+  getOwnKeys,
+  forOwnPropNames,
+  forKeys,
+  mapOwnPropNamesToArray,
+  mapKeysToArray,
 } from './util';
 
 
@@ -24,7 +24,7 @@ const create = (options = {}) => {
     throw new ConfigError("'global' must be provided");
   }
 
-  const context = options.context || glob;
+  const context = options.context || Object.create(null);
 
   const JSON = options.JSON || glob.JSON;
 
@@ -63,13 +63,22 @@ const create = (options = {}) => {
   const addClass = (Class) => {
     const {name} = Class;
     if (!isValidClassName(name)) {
-      throw new StringifyError("'name' must be provided to serialize custom class.");
+      throw new ConfigError("'name' must be provided to serialize custom class.");
+    }
+    if (name in context) {
+      throw new ConfigError(`'${name}' already exists in context.`);
     }
     context[name] = Class;
   };
 
 
-  const removeClass = (name) => {
+  const removeClass = ({name}) => {
+    if (!isValidClassName(name)) {
+      throw new ConfigError("'name' must be provided to serialize custom class.");
+    }
+    if (!(name in context)) {
+      throw new ConfigError(`'${name}' does not exist.`);
+    }
     delete context[name];
   };
 
@@ -130,7 +139,7 @@ const create = (options = {}) => {
 
 
   const stringifyObject = (obj) => {
-    const props = getOwnEnumKeys(obj)
+    const props = getOwnKeys(obj)
       .map((key) => stringifyProp(obj[key], key))
       .filter((x) => x)
       .join();
@@ -164,7 +173,7 @@ const create = (options = {}) => {
       if (!constructor || constructor === Object) {
         const {[CLASS_NAME_KEY]: className, p: json} = data;
         if (!className) {
-          forOwnProps(data, (val, key) => { data[key] = instantiate(val); });
+          forOwnPropNames(data, (val, key) => { data[key] = instantiate(val); });
           return data;
         }
 
@@ -216,4 +225,7 @@ try { defaultSeri = create(); } catch (e) {}
 export {
   defaultSeri as default,
   create,
+  ConfigError,
+  StringifyError,
+  ParseError,
 };

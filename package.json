@@ -1,6 +1,6 @@
 {
   "name": "seri",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "JavaScript (Node.js) serializer / deserializer with support for classes.",
   "main": "lib/index.js",
   "directories": {
