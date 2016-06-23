@@ -22,6 +22,14 @@ describe('seri', () => {
     };
 
     expect(seri.stringify(obj)).to.equal(JSON.stringify(obj));
+
+    const clone = seri.parse(seri.stringify(obj));
+    // Undefined does not get added to the string.
+    expect('undefined' in clone).to.be.false;
+
+    clone.undefined = undefined;
+    expect(clone).to.not.equal(obj);
+    expect(clone).to.eql(obj);
   });
 
 
@@ -30,14 +38,15 @@ describe('seri', () => {
     const clone = seri.parse(seri.stringify(date));
     expect(clone).to.not.equal(date);
     expect(clone).to.be.an.instanceof(Date);
+    expect(clone.getTime()).to.equal(date.getTime());
     expect(clone.toJSON()).to.equal(date.toJSON());
   });
 
 
   it('stringify/parse Date in object', () => {
     const date = new Date();
-    const obj = {date};
-    const clone = seri.parse(seri.stringify(obj)).date;
+    const obj = {a: [{date}]};
+    const clone = seri.parse(seri.stringify(obj)).a[0].date;
     expect(clone).to.not.equal(date);
     expect(clone).to.be.an.instanceof(Date);
     expect(clone.toJSON()).to.equal(date.toJSON());
@@ -76,5 +85,41 @@ describe('seri', () => {
     expect(clone2).to.not.equal(obj2);
     expect(clone2).to.be.an.instanceof(A);
     expect(obj2.equals(clone2)).to.be.true;
+  });
+
+
+  it('README XY', () => {
+    class XY {
+      // Simply provide `toJSON` and `fromJSON`.
+      static toJSON = ({x, y}) => `${x},${y}`
+      static fromJSON = (json) => new XY(...json.split(',').map(Number))
+
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+      }
+
+      equals(o) {
+        return o instanceof XY &&
+          this.x === o.x &&
+          this.y === o.y;
+      }
+    }
+
+    // Register to seri.
+    seri.addClass(XY);
+
+    const xy = new XY(5, 3);
+    const xyClone = seri.parse(seri.stringify(xy));
+
+    expect(xyClone).to.not.equal(xy);
+    expect(xyClone).to.be.an.instanceof(XY);
+    expect(xy.equals(xyClone)).to.be.true;
+
+    const xyNestedClone = seri.parse(seri.stringify({xy})).xy;
+
+    expect(xyNestedClone).to.not.equal(xy);
+    expect(xyNestedClone).to.be.an.instanceof(XY);
+    expect(xy.equals(xyNestedClone)).to.be.true;
   });
 });
