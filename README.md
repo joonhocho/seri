@@ -120,9 +120,7 @@ xy.equals(xyClone);
 
 
 ### TODO
- - Support `undefined`.
- - Support `undefined` in Array.
- - Support `undefined` in Object.
+ - Explain how it works
 
 
 ### LICENSE
