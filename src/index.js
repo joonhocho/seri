@@ -60,8 +60,8 @@ const create = (options = {}) => {
     glob[name] && glob[name].fromJSON;
 
 
-  const addClass = (Class) => {
-    const {name} = Class;
+  const addClass = (Class, className) => {
+    const name = className || Class.name;
     if (!isValidClassName(name)) {
       throw new ConfigError("'name' must be provided to serialize custom class.");
     }
